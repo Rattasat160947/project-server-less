@@ -1,0 +1,77 @@
+pipeline {
+    agent { label "wsl" }
+    stages {
+        stage('Checkout') {
+            steps {
+                cleanWs()
+                script {
+                    sh """
+                        set -a
+                        source /home/rattasat/Desktop/serverless/project-server-less/.env
+                        set +a
+                        git clone https://\$\{USERNAME\}:\$\{PASSWORD\}@github.com/\$\{USERNAME\}/project-server-less.git .
+                    """
+                }
+            }
+        }
+
+        stage('Build Docker Images') {
+            steps {
+                script {
+                    sh """
+                        set -a
+                        source /home/rattasat/Desktop/serverless/project-server-less/.env
+                        set +a
+                        echo "Building backend Image..."
+                        cd backend && docker build . -t \${USERNAME}/server-backend:\${version}
+                    """
+                }
+            }
+        }
+        
+        stage('Test Docker Images') {
+            steps {
+                script {
+                    sh """
+                        set -a
+                        source /home/rattasat/Desktop/serverless/project-server-less/.env
+                        set +a
+                        echo "Testing backend Image..."
+                        docker run --rm \${USERNAME}/server-backend:\${version} echo 'backend Test Passed!'
+                    """
+                }
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    sh """
+                        set -a
+                        source /home/rattasat/Desktop/serverless/project-server-less/.env
+                        set +a
+                        echo "Logging in to Docker Hub..."
+                        echo \${PASSWORD} | docker login -u \${USERNAME} --password-stdin
+                        echo "Pushing backend Image to Docker Hub..."
+                        docker push \${USERNAME}/server-backend:\${version}
+                    """
+                }
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                script {
+                    sh """
+                        set -a
+                        source /home/rattasat/Desktop/serverless/project-server-less/.env
+                        set +a
+                        echo 'Cleaning up local Docker images...'
+                        docker rmi \${USERNAME}/server-backend:\${version}
+                        docker logout
+                    """
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,81 @@
+---
+- name: Deploy Backend on Kubernetes
+  hosts: wsl
+  tasks:
+    - name: Create a web-app namespace
+      kubernetes.core.k8s:
+        name: web-app
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Create PersistentVolumeClaim for SQLite
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: sqlite-pvc
+            namespace: web-app
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1Gi
+
+    - name: Deploy Backend Deployment
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: backend
+            namespace: web-app
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: backend
+            template:
+              metadata:
+                labels:
+                  app: backend
+              spec:
+                containers:
+                - name: backend
+                  image: "{{ lookup('env', 'USERNAME') }}/server-backend:{{ version }}"
+                  ports:
+                  - containerPort: 8080
+                  env:
+                    - name: PORT
+                      value: "8080"
+                    - name: DB_PATH
+                      value: "/app/data/app.db"
+                  volumeMounts:
+                    - name: sqlite-storage
+                      mountPath: /app/data
+                volumes:
+                  - name: sqlite-storage
+                    persistentVolumeClaim:
+                      claimName: sqlite-pvc
+
+    - name: Create Backend Service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: backend-service
+            namespace: web-app
+          spec:
+            type: NodePort
+            selector:
+              app: backend
+            ports:
+            - port: 8080
+              targetPort: 8080
+              nodePort: 30500

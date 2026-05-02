@@ -1,0 +1,34 @@
+pipeline {
+    agent { label "wsl" }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                cleanWs()
+                script {
+                    sh """
+                        set -a
+                        source /home/rattasat/Desktop/serverless/project-server-less/.env
+                        set +a
+                        git clone https://\$\{USERNAME\}:\$\{PASSWORD\}@github.com/\$\{USERNAME\}/project-server-less.git .
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes Cluster') {
+            steps {
+                script {
+                    echo "Deploy Frontend to Kubernetes Cluster..."
+                    sh "cd ansible/frontend && ansible-playbook -i hosts.ini deploy_frontend.yml --extra-vars \"version=${version}\""
+                }
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                cleanWs()
+            }
+        }
+    }
+}
