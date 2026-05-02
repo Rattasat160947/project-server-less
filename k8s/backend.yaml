@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: my-app/go-backend:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_PATH
+          value: "/app/data/app.db"
+        volumeMounts:
+        - name: sqlite-storage
+          mountPath: /app/data # ต้องตรงกับที่ตั้งไว้ใน Dockerfile
+      volumes:
+      - name: sqlite-storage
+        persistentVolumeClaim:
+          claimName: sqlite-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080

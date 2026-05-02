@@ -20,7 +20,12 @@ pipeline {
             steps {
                 script {
                     echo "Deploy Frontend to Kubernetes Cluster..."
-                    sh "cd ansible/frontend && ansible-playbook -i hosts.ini deploy_frontend.yml --extra-vars \"version=${version}\""
+                    sh """
+                        set -a
+                        source /home/rattasat/Desktop/serverless/project-server-less/.env
+                        set +a
+                        cd ansible/frontend && ansible-playbook -i hosts.ini deploy_frontend.yml --extra-vars "version=${version}"
+                    """
                 }
             }
         }

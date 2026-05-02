@@ -9,4 +9,4 @@ scrape_configs:
     static_configs:
       - targets: ["192.168.199.233:3001"]
 rule_files:
-    - "alert_rules.yml" # ระบุไฟล์ Rule ที่ต้องการให้ Prometheus อ่าน
+    - "alert_rules.yml"
