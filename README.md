@@ -1,6 +1,6 @@
 # 🚀 Web App Microservices (Frontend + Go Backend) — ENG23 3074
 
-> ระบบ Web Application ที่แยกส่วน Frontend (HTML/JS) และ Backend (Golang) แบบ Microservices มีการทำ Automated CI/CD ด้วย Jenkins, Deploy ด้วย Ansible ลง Kubernetes และ Monitoring ด้วย Prometheus
+> ระบบ Web Application ที่แยกส่วน Frontend (HTML/JS) และ Backend (Golang) แบบ Microservices มีการทำ Automated CI/CD ด้วย Jenkins, Deploy ด้วย Ansible ลง Kubernetes และ Monitoring ตรวจสอบสถานะการทำงานด้วย Prometheus ร่วมกับ Grafana
 
 ---
 
@@ -19,7 +19,7 @@
 ### แอปพลิเคชัน
 - **Frontend:** Vanilla HTML, CSS, JS
 - **Backend:** Golang (REST API) + SQLite (Persistent Storage)
-- **คำอธิบาย:** Web Application ที่แบ่งสถาปัตยกรรมเป็น 2 ส่วน (Frontend และ Backend) ทำงานแยกจากกันผ่าน Docker Container และจัดการ Orchestration ด้วย Kubernetes เพื่อให้สามารถทนทานต่อความล้มเหลวและขยายระบบได้ง่าย
+- **คำอธิบาย:** Web Application ที่แบ่งสถาปัตยกรรมเป็น 2 ส่วน คือ Frontend และ Backend ผ่าน Docker Container และจัดการ Orchestration ด้วย Kubernetes เพื่อให้สามารถทนทานต่อความล้มเหลวและขยายระบบได้ง่าย
 
 ### Architecture Diagram
 ```text
@@ -40,7 +40,7 @@ Developer
                                 ▼
                        Kubernetes Cluster
             ┌──────────────────────────────────────┐
-            │        Frontend Pods (Nginx)         │
+            │        Frontend Pods (Nginx/Node)    │
             │        Backend Pods (Go App)         │
             │     SQLite PVC (Persistent Vol)      │
             └──────────────────────────────────────┘
@@ -53,16 +53,23 @@ Developer
 
 ---
 
-## 📁 โครงสร้าง Repository
+## 📁 โครงสร้าง Repository (รายละเอียดไฟล์)
 
 ```text
 project-server-less/
+├── .gitignore
+├── README.md
 ├── ansible/                  # สคริปต์สำหรับการทำ Automation Deployment ด้วย Ansible
 │   ├── backend/
+│   │   ├── deploy_backend.yml
+│   │   └── hosts.ini
 │   └── frontend/
+│       ├── deploy_frontend.yml
+│       └── hosts.ini
 ├── backend/                  # โฟลเดอร์สำหรับ Backend (พัฒนาด้วย Go)
 │   ├── Dockerfile            # คำสั่งสร้าง Go Backend image
 │   ├── go.mod
+│   ├── go.sum
 │   └── main.go               # โค้ดหลักของ Backend
 ├── frontend/                 # โฟลเดอร์สำหรับ Frontend (HTML, JS)
 │   ├── Dockerfile            # คำสั่งสร้าง Frontend image
@@ -70,30 +77,59 @@ project-server-less/
 │   └── index.html            # หน้าเว็บหลัก
 ├── jenkins/                  # CI/CD Pipelines
 │   ├── build/                # ไฟล์ Pipeline สำหรับ Build Image
+│   │   ├── Jenkinsfile_backend
+│   │   └── Jenkinsfile_frontend
 │   └── deploy/               # ไฟล์ Pipeline สำหรับ Deploy
+│       ├── Jenkinsfile_backend
+│       └── Jenkinsfile_frontend
 ├── k8s/                      # Kubernetes Manifests
-│   ├── frontend.yaml         # Deployment & Service ของ Frontend
 │   ├── backend.yaml          # Deployment & Service ของ Backend
-│   └── pvc.yaml              # Persistent Volume Claim สำหรับฐานข้อมูล
-├── prometheus/               # การจัดการ Monitoring
-│   ├── alert_rules.yml       # กฎการแจ้งเตือน
-│   ├── docker-compose.yml
-│   └── prometheus.yml        # ตั้งค่า Scrape metrics
-└── README.md
+│   ├── frontend.yaml         # Deployment & Service ของ Frontend
+│   └── pvc.yaml              # Persistent Volume Claim สร้าง Storage ให้ SQLite
+└── prometheus/               # การจัดการ Monitoring
+    ├── alert_rules.yml       # กฎการแจ้งเตือน (Alert Manager)
+    ├── docker-compose.yml    # รัน Prometheus Service 
+    └── prometheus.yml        # ตั้งค่า Scrape metrics ไปยัง Service ต่างๆ
 ```
 
 ---
 
 ## ⚙️ สิ่งที่ต้องติดตั้งก่อน (Prerequisites)
 
+ตรวจสอบให้แน่ใจว่าติดตั้งทุก tool ครบก่อนรันโปรเจค
+
 | Tool | Version | หน้าที่ |
 |------|---------|---------|
-| Git | ≥ 2.x | จัดการ Source code |
-| Docker | ≥ 24.x | สร้างและรัน Container |
-| Jenkins | ≥ 2.4xx | ระบบ CI/CD Automation |
-| Ansible | ≥ 2.15 | Configure environment และรัน K8s Manifests |
+| Git | ≥ 2.x | จัดการ source code |
+| Docker | ≥ 24.x | สร้างและรัน container |
+| Jenkins | ≥ 2.4xx | ระบบ CI/CD automation |
+| Ansible | ≥ 2.15 | Configure environment และเซ็ตอัป K8s |
 | kubectl | ≥ 1.28 | สั่งงาน Kubernetes cluster |
-| Prometheus | ≥ 2.x | เก็บ Metrics ของระบบ |
+| Prometheus | ≥ 2.x | เก็บ metrics ของระบบ |
+| Grafana | ≥ 10.x | แสดง dashboard แบบ Real-time |
+
+---
+
+## 🏃 วิธีรันโปรเจคเบื้องต้น (Manual Quick Start)
+
+### 1. Clone Repository
+```bash
+git clone https://github.com/Rattasat160947/project-server-less.git
+cd project-server-less
+```
+
+### 2. รันระบบทั้งหมดด้วย Kubernetes
+```bash
+# ต้องสร้างไฟล์ Volume (PVC) สำหรับ Backend ก่อน
+kubectl apply -f k8s/pvc.yaml
+# สั่ง Deploy ระบบ
+kubectl apply -f k8s/backend.yaml
+kubectl apply -f k8s/frontend.yaml
+
+# คอยเช็คสถานะ
+kubectl get pods,svc
+```
+> สามารถเข้าหน้าเว็บผ่าน IP เครื่อง Node Port `30300` สำหรับ Frontend และ `30500` สำหรับ Backend
 
 ---
 
@@ -101,47 +137,71 @@ project-server-less/
 
 โปรเจคนี้จัดโครงสร้าง Jenkins Pipeline ออกเป็น **Build** และ **Deploy** แยกกันระหว่าง Frontend และ Backend:
 
-1. **Build Pipeline** (`jenkins/build/Jenkinsfile_*`)
+### วิธีทำงานของ Pipeline:
+1. **วงจร Build** (`jenkins/build/Jenkinsfile_*`)
    - ดึงโค้ดล่าสุดจาก GitHub
-   - สร้าง Docker Image (`my-app/vanilla-frontend` และ `my-app/go-backend`)
-   - Push Image ขึ้น Docker Hub
+   - ตรวจสอบผ่านการ Test คอนเทนเนอร์หลังจาก Build
+   - อัปโหลด Docker Image (`USERNAME/server-frontend` และ `USERNAME/server-backend`) ไปที่ Docker Hub และเคลียร์พื้นที่
 
-2. **Deploy Pipeline** (`jenkins/deploy/Jenkinsfile_*`)
-   - รัน Ansible Playbook เพื่อสั่งงานไปที่ Host ปลายทาง
-   - ทำการ Apply Kubernetes Manifests (`kubectl apply -f k8s/...`) อัตโนมัติ
-
----
-
-## 🏗️ Infrastructure as Code (Ansible & Kubernetes)
-
-### 1. Kubernetes
-- **Frontend:** ใช้ Kubernetes Service แบบ `NodePort` (`30080`) เพื่อรองรับ HTTP Traffic จากภายนอก
-- **Backend:** รัน Pod สำหรับ Golang API และผูก `PersistentVolumeClaim (PVC)` เข้ากับ SQLite Database เพื่อเก็บข้อมูลถาวรแม้ Pod จะรีสตาร์ท
-
-### 2. Ansible Deploy
-เราใช้ Ansible ในการควบคุม Node เป้าหมายเพื่อเตรียมสภาพแวดล้อม และ Apply K8s:
-```bash
-cd ansible/frontend
-ansible-playbook -i hosts.ini deploy_frontend.yml
-
-cd ../backend
-ansible-playbook -i hosts.ini deploy_backend.yml
-```
-> **หมายเหตุ:** ขั้นตอนนี้ถูกจัดการโดย Jenkins แบบอัตโนมัติ
+2. **วงจร Deploy** (`jenkins/deploy/Jenkinsfile_*`)
+   - ดึงค่า Environment `.env` (Credentials ต่างๆ)
+   - รันคำสั่ง Ansible เพื่อย้ายไป Deploy ไฟล์ Manifest (.yaml) ภายใน Kubernetes ของระบบปลายทาง
 
 ---
 
-## 📊 Monitoring (Prometheus)
+## 📊 Monitoring (Prometheus & Grafana)
 
-ตั้งค่าการดึง Metrics เพื่อ Monitoring ระบบ:
+แยกการจัดการส่วนมอนิเตอร์ริ่งออกมาที่โฟลเดอร์ `prometheus/` 
+
+### Prometheus — เก็บ Metrics
 - ไฟล์ config: `prometheus/prometheus.yml`
-- รันด้วย Docker Compose: `docker-compose -f prometheus/docker-compose.yml up -d`
-- เพิ่ม Alert Rules สำหรับการแจ้งเตือนเมื่อระบบมีปัญหา (`prometheus/alert_rules.yml`)
+- Scrape endpoint เป้าหมายเช่น Backend metrics
+- รันและเปิดระบบผ่าน Docker Compose: 
+```bash
+docker-compose -f prometheus/docker-compose.yml up -d
+# เปิด UI ตรวจสอบได้ที่ http://localhost:9090
+```
+
+### Grafana — แสดง Dashboard
+ระบบต่อเชื่อม Prometheus เข้ากับ Grafana เพื่อสร้าง Dashboard ใช้ดูสุขภาพของแอปพลิเคชัน:
+1. เปิด Grafana ที่ `http://localhost:3000`
+2. ตั้งค่า Data Source ระบุเป็น `http://[IP-Prometheus]:9090`
+3. ไปที่ **Dashboards → Import** 
+
+### Panels ที่ควรตั้งค่าใน Dashboard (PromQL)
+
+| Panel | Metric (PromQL) | แสดงข้อมูลอะไร |
+|-------|-----------------|----------------|
+| HTTP Request Rate | `rate(http_requests_total[1m])` | จำนวน request ต่อวินาที |
+| Error 5xx Rate | `rate(http_requests_total{status=~"5.."}[1m])` | จำนวณ Error Server ต่อวินาที |
+| CPU Usage | `rate(process_cpu_seconds_total[1m])` | ปริมาณ CPU ที่แอปใช้งาน |
+| Pod Database Health | `up{job="backend"}` | สถานะระบบ Backend (1=ทำงาน, 0=ล่ม) |
+
+---
+
+## 🐛 ปัญหาที่พบบ่อย (Troubleshooting)
+
+**Pods ค้างอยู่ที่ `Pending` ไม่ยอม Running**
+```bash
+kubectl describe pod [pod-name]
+# ดูที่ Events: อาจเกิดจาก Node ทรัพยากรไม่พอ หรือ PVC ผิดพลาด
+```
+
+**Jenkins สั่ง Deploy ผ่าน Ansible ไม่สำเร็จ**
+- ให้ตรวจสอบว่าคุณมีไฟล์ `.env` ที่ root path `/home/rattasat/Desktop/serverless/project-server-less/.env` แล้วหรือยัง เพราะ Jenkinsfile มองหา Environment ตัวนี้อยู่ 
+- หากไม่พบ อาจทำให้ไม่สามารถ Deploy Image ได้ถูกเวอร์ชั่น
+
+**Prometheus แสดง target เป็น DOWN หรือ Unhealthy**
+```bash
+# ตรวจระดับ Pods ของ Backend ให้แน่ใจว่ารันอยู่ และเผยแพร่ /metrics
+curl http://localhost:30500/metrics
+# ตรวจสอบไฟล์ prometheus.yml ว่าเป้าหมาย target ตรงกับพอร์ตที่ Kubernetes แจกจ่ายหรือไม่
+```
 
 ---
 
 ## 📄 ข้อมูลการส่งงาน
 
 - วิชา: **ENG23 3074 — Serverless and Cloud Architectures**
-- อาจารย์ผู้สอน: **ดร. นันทวุฒิ คะอังกุ**
+- อาจารย์ผู้สอน: **ดร. นันทวุฒิ  คะอังกุ**
 - ภาควิชาวิศวกรรมคอมพิวเตอร์
