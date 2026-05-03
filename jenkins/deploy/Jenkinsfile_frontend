@@ -6,13 +6,12 @@ pipeline {
             steps {
                 cleanWs()
                 script {
-                    sh """
-                        set -a
-                        . /home/rattasat/Desktop/serverless/project-server-less/.env
-                        set +a
-                        ENCODED_PASSWORD=\$(echo "\${PASSWORD}" | sed 's/@/%40/g')
-                        git clone https://\${USERNAME}:\${ENCODED_PASSWORD}@github.com/\${USERNAME}/project-server-less.git .
-                    """
+                    withCredentials([usernamePassword(credentialsId: 'github-creds', passwordVariable: 'GIT_PASS', usernameVariable: 'GIT_USER')]) {
+                        sh """
+                            ENCODED_PASSWORD=\$(echo "\$GIT_PASS" | sed 's/@/%40/g')
+                            git clone https://\$GIT_USER:\$ENCODED_PASSWORD@github.com/\$GIT_USER/project-server-less.git .
+                        """
+                    }
                 }
             }
         }
@@ -21,12 +20,18 @@ pipeline {
             steps {
                 script {
                     echo "Deploy Frontend to Kubernetes Cluster..."
-                    sh """
-                        set -a
-                        . /home/rattasat/Desktop/serverless/project-server-less/.env
-                        set +a
-                        cd ansible/frontend && ansible-playbook -i hosts.ini deploy_frontend.yml --extra-vars "version=${version}"
-                    """
+                    withCredentials([
+                        usernamePassword(credentialsId: 'github-creds', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME'),
+                        usernamePassword(credentialsId: 'docker-hub-creds', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')
+                    ]) {
+                        sh """
+                            export USERNAME=\$USERNAME
+                            export PASSWORD=\$PASSWORD
+                            export DOCKER_USERNAME=\$DOCKER_USERNAME
+                            
+                            cd ansible/frontend && ansible-playbook -i hosts.ini deploy_frontend.yml --extra-vars "version=${version}"
+                        """
+                    }
                 }
             }
         }

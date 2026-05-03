@@ -5,13 +5,12 @@ pipeline {
             steps {
                 cleanWs()
                 script {
-                    sh """
-                        set -a
-                        . /home/rattasat/Desktop/serverless/project-server-less/.env
-                        set +a
-                        ENCODED_PASSWORD=\$(echo "\${PASSWORD}" | sed 's/@/%40/g')
-                        git clone https://\${USERNAME}:\${ENCODED_PASSWORD}@github.com/\${USERNAME}/project-server-less.git .
-                    """
+                    withCredentials([usernamePassword(credentialsId: 'github-creds', passwordVariable: 'GIT_PASS', usernameVariable: 'GIT_USER')]) {
+                        sh """
+                            ENCODED_PASSWORD=\$(echo "\$GIT_PASS" | sed 's/@/%40/g')
+                            git clone https://\$GIT_USER:\$ENCODED_PASSWORD@github.com/\$GIT_USER/project-server-less.git .
+                        """
+                    }
                 }
             }
         }
@@ -19,13 +18,12 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 script {
-                    sh """
-                        set -a
-                        . /home/rattasat/Desktop/serverless/project-server-less/.env
-                        set +a
-                        echo "Building frontend Image..."
-                        cd frontend && docker build . -t \${DOCKER_USERNAME}/server-frontend:${version}
-                    """
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                        sh """
+                            echo "Building frontend Image ${params.version} ..."
+                            cd frontend && docker build . -t \$DOCKER_USER/server-frontend:${params.version}
+                        """
+                    }
                 }
             }
         }
@@ -33,13 +31,12 @@ pipeline {
         stage('Test Docker Images') {
             steps {
                 script {
-                    sh """
-                        set -a
-                        . /home/rattasat/Desktop/serverless/project-server-less/.env
-                        set +a
-                        echo "Testing frontend Image ${params.version}..."
-                        docker run --rm \${DOCKER_USERNAME}/server-frontend:${params.version} echo 'frontend Test Passed!'
-                    """
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                        sh """
+                            echo "Testing frontend Image..."
+                            docker run --rm \$DOCKER_USER/server-frontend:${version} echo 'frontend Test Passed!'
+                        """
+                    }
                 }
             }
         }
@@ -47,15 +44,16 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 script {
-                    sh """
-                        set -a
-                        . /home/rattasat/Desktop/serverless/project-server-less/.env
-                        set +a
-                        echo "Logging in to Docker Hub..."
-                        echo \${DOCKER_PASSWORD} | docker login -u \${DOCKER_USERNAME} --password-stdin
-                        echo "Pushing frontend Image to Docker Hub..."
-                        docker push \${DOCKER_USERNAME}/server-frontend:${version}
-                    """
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                        sh """
+                            mkdir -p .docker
+                            export DOCKER_CONFIG="\$PWD/.docker"
+                            echo "Logging in to Docker Hub..."
+                            echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
+                            echo "Pushing frontend Image version: ${version} ..."
+                            docker push \$DOCKER_USER/server-frontend:${version}
+                        """
+                    }
                 }
             }
         }
@@ -63,14 +61,14 @@ pipeline {
         stage('Cleanup') {
             steps {
                 script {
-                    sh """
-                        set -a
-                        . /home/rattasat/Desktop/serverless/project-server-less/.env
-                        set +a
-                        echo 'Cleaning up local Docker images...'
-                        docker rmi \${DOCKER_USERNAME}/server-frontend:${version}
-                        docker logout
-                    """
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                        sh """
+                            export DOCKER_CONFIG="\$PWD/.docker"
+                            echo 'Cleaning up local Docker images...'
+                            docker rmi \$DOCKER_USER/server-frontend:${version}
+                            docker logout
+                        """
+                    }
                 }
             }
         }
