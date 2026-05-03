@@ -24,7 +24,7 @@ pipeline {
                         . /home/rattasat/Desktop/serverless/project-server-less/.env
                         set +a
                         echo "Building backend Image ${params.version} ..."
-                        cd backend && docker build . -t \${USERNAME}/server-backend:${params.version}
+                        cd backend && docker build . -t \${DOCKER_USERNAME}/server-backend:${params.version}
                     """
                 }
             }
@@ -38,7 +38,7 @@ pipeline {
                         . /home/rattasat/Desktop/serverless/project-server-less/.env
                         set +a
                         echo "Testing backend Image..."
-                        docker run --rm \${USERNAME}/server-backend:${version} echo 'backend Test Passed!'
+                        docker run --rm \${DOCKER_USERNAME}/server-backend:${version} echo 'backend Test Passed!'
                     """
                 }
             }
@@ -54,7 +54,7 @@ pipeline {
                         echo "Logging in to Docker Hub..."
                         echo \${PASSWORD} | docker login -u \${USERNAME} --password-stdin
                         echo "Pushing backend Image to Docker Hub..."
-                        docker push \${USERNAME}/server-backend:${version}
+                        docker push \${DOCKER_USERNAME}/server-backend:${version}
                     """
                 }
             }
@@ -68,7 +68,7 @@ pipeline {
                         . /home/rattasat/Desktop/serverless/project-server-less/.env
                         set +a
                         echo 'Cleaning up local Docker images...'
-                        docker rmi \${USERNAME}/server-backend:${version}
+                        docker rmi \${DOCKER_USERNAME}/server-backend:${version}
                         docker logout
                     """
                 }

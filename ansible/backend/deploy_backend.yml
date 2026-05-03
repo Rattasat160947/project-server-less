@@ -46,7 +46,7 @@
               spec:
                 containers:
                 - name: backend
-                  image: "{{ lookup('env', 'USERNAME') }}/server-backend:{{ version }}"
+                  image: "{{ lookup('env', 'DOCKER_USERNAME') }}/server-backend:{{ version }}"
                   ports:
                   - containerPort: 8080
                   env:

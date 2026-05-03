@@ -30,7 +30,7 @@
               spec:
                 containers:
                 - name: frontend
-                  image: "{{ lookup('env', 'USERNAME') }}/server-frontend:{{ version }}"
+                  image: "{{ lookup('env', 'DOCKER_USERNAME') }}/server-frontend:{{ version }}"
                   ports:
                   - containerPort: 3000
 
