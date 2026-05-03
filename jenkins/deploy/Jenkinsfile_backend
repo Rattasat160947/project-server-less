@@ -10,7 +10,8 @@ pipeline {
                         set -a
                         . /home/rattasat/Desktop/serverless/project-server-less/.env
                         set +a
-                        git clone https://\${USERNAME}:\${PASSWORD}@github.com/\${USERNAME}/project-server-less.git .
+                        ENCODED_PASSWORD=\$(echo "\${PASSWORD}" | sed 's/@/%40/g')
+                        git clone https://\${USERNAME}:\${ENCODED_PASSWORD}@github.com/\${USERNAME}/project-server-less.git .
                     """
                 }
             }
