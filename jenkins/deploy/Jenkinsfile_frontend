@@ -8,7 +8,7 @@ pipeline {
                 script {
                     sh """
                         set -a
-                        source /home/rattasat/Desktop/serverless/project-server-less/.env
+                        . /home/rattasat/Desktop/serverless/project-server-less/.env
                         set +a
                         git clone https://\${USERNAME}:\${PASSWORD}@github.com/\${USERNAME}/project-server-less.git .
                     """
@@ -22,7 +22,7 @@ pipeline {
                     echo "Deploy Frontend to Kubernetes Cluster..."
                     sh """
                         set -a
-                        source /home/rattasat/Desktop/serverless/project-server-less/.env
+                        . /home/rattasat/Desktop/serverless/project-server-less/.env
                         set +a
                         cd ansible/frontend && ansible-playbook -i hosts.ini deploy_frontend.yml --extra-vars "version=${version}"
                     """

@@ -7,7 +7,7 @@ pipeline {
                 script {
                     sh """
                         set -a
-                        source /home/rattasat/Desktop/serverless/project-server-less/.env
+                        . /home/rattasat/Desktop/serverless/project-server-less/.env
                         set +a
                         git clone https://\${USERNAME}:\${PASSWORD}@github.com/\${USERNAME}/project-server-less.git .
                     """
@@ -20,7 +20,7 @@ pipeline {
                 script {
                     sh """
                         set -a
-                        source /home/rattasat/Desktop/serverless/project-server-less/.env
+                        . /home/rattasat/Desktop/serverless/project-server-less/.env
                         set +a
                         echo "Building backend Image..."
                         cd backend && docker build . -t \${USERNAME}/server-backend:\${version}
@@ -34,7 +34,7 @@ pipeline {
                 script {
                     sh """
                         set -a
-                        source /home/rattasat/Desktop/serverless/project-server-less/.env
+                        . /home/rattasat/Desktop/serverless/project-server-less/.env
                         set +a
                         echo "Testing backend Image..."
                         docker run --rm \${USERNAME}/server-backend:\${version} echo 'backend Test Passed!'
@@ -48,7 +48,7 @@ pipeline {
                 script {
                     sh """
                         set -a
-                        source /home/rattasat/Desktop/serverless/project-server-less/.env
+                        . /home/rattasat/Desktop/serverless/project-server-less/.env
                         set +a
                         echo "Logging in to Docker Hub..."
                         echo \${PASSWORD} | docker login -u \${USERNAME} --password-stdin
@@ -64,7 +64,7 @@ pipeline {
                 script {
                     sh """
                         set -a
-                        source /home/rattasat/Desktop/serverless/project-server-less/.env
+                        . /home/rattasat/Desktop/serverless/project-server-less/.env
                         set +a
                         echo 'Cleaning up local Docker images...'
                         docker rmi \${USERNAME}/server-backend:\${version}
