@@ -23,8 +23,8 @@ pipeline {
                         set -a
                         . /home/rattasat/Desktop/serverless/project-server-less/.env
                         set +a
-                        echo "Building backend Image..."
-                        cd backend && docker build . -t \${USERNAME}/server-backend:\${version}
+                        echo "Building backend Image ${params.version} ..."
+                        cd backend && docker build . -t \${USERNAME}/server-backend:\${params.version}
                     """
                 }
             }

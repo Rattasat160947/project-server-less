@@ -37,8 +37,8 @@ pipeline {
                         set -a
                         . /home/rattasat/Desktop/serverless/project-server-less/.env
                         set +a
-                        echo "Testing frontend Image..."
-                        docker run --rm \${USERNAME}/server-frontend:\${version} echo 'frontend Test Passed!'
+                        echo "Testing frontend Image ${params.version}..."
+                        docker run --rm \${USERNAME}/server-frontend:\${params.version} echo 'frontend Test Passed!'
                     """
                 }
             }
