@@ -1,34 +1,19 @@
 ---
 - name: Deploy Backend on Kubernetes
-  hosts: wsl
+  hosts: all
   tasks:
-    - name: Create a web-app namespace
+    - name: Create web-app namespace
       kubernetes.core.k8s:
         name: web-app
         api_version: v1
         kind: Namespace
         state: present
 
-    - name: Create PersistentVolumeClaim for SQLite
+    - name: Deploy Backend Service and Deployment
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: v1
-          kind: PersistentVolumeClaim
-          metadata:
-            name: sqlite-pvc
-            namespace: web-app
-          spec:
-            accessModes:
-              - ReadWriteOnce
-            resources:
-              requests:
-                storage: 1Gi
-
-    - name: Deploy Backend Deployment
-      kubernetes.core.k8s:
-        state: present
-        definition:
+          # --- ส่วนของ Deployment ---
           apiVersion: apps/v1
           kind: Deployment
           metadata:
@@ -36,6 +21,8 @@
             namespace: web-app
           spec:
             replicas: 1
+            strategy:
+              type: Recreate  # เพิ่มส่วนนี้เพื่อให้ SQLite ไม่โดน Lock ตอน Update
             selector:
               matchLabels:
                 app: backend
@@ -46,12 +33,11 @@
               spec:
                 containers:
                 - name: backend
-                  image: "{{ lookup('env', 'DOCKER_USERNAME') }}/server-backend:{{ version }}"
+                  # ใช้ตัวแปรที่ส่งมาจาก Jenkinsfile
+                  image: "{{ docker_user }}/server-backend:{{ version }}"
                   ports:
                   - containerPort: 8080
                   env:
-                    - name: PORT
-                      value: "8080"
                     - name: DB_PATH
                       value: "/app/data/app.db"
                   volumeMounts:
@@ -66,16 +52,15 @@
       kubernetes.core.k8s:
         state: present
         definition:
+          # --- ส่วนของ Service ---
           apiVersion: v1
           kind: Service
           metadata:
             name: backend-service
             namespace: web-app
           spec:
-            type: NodePort
             selector:
               app: backend
             ports:
             - port: 8080
               targetPort: 8080
-              nodePort: 30500

@@ -1,6 +1,10 @@
 pipeline {
     agent { label "wsl" }
     
+    parameters {
+        string(name: 'version', defaultValue: 'latest', description: 'Docker Image Tag to deploy')
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -16,30 +20,27 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes Cluster') {
+        stage('Deploy Frontend to K8s') {
             steps {
                 script {
-                    echo "Deploy Frontend to Kubernetes Cluster..."
+                    echo "Starting Ansible Deployment for Frontend..."
                     withCredentials([
-                        usernamePassword(credentialsId: 'github-creds', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME'),
                         usernamePassword(credentialsId: 'docker-hub-creds', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')
                     ]) {
                         sh """
-                            export USERNAME=\$USERNAME
-                            export PASSWORD=\$PASSWORD
-                            export DOCKER_USERNAME=\$DOCKER_USERNAME
-                            
-                            cd ansible/frontend && ansible-playbook -i hosts.ini deploy_frontend.yml --extra-vars "version=${version}"
+                            cd ansible
+                            ansible-playbook -i inventory/hosts.ini k8s-manifests/deploy_frontend.yml \
+                            --extra-vars "version=${params.version} docker_user=${DOCKER_USERNAME}"
                         """
                     }
                 }
             }
         }
+    }
 
-        stage('Cleanup') {
-            steps {
-                cleanWs()
-            }
+    post {
+        always {
+            cleanWs()
         }
     }
 }

@@ -1,0 +1,15 @@
+---
+- name: Master Deploy Playbook
+  hosts: all
+  tasks:
+    - name: 1. Ensure Namespace exists
+      shell: kubectl create namespace web-app --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: 2. Deploy SQLite Storage (PVC)
+      include_tasks: k8s-manifests/sqlite-pvc.yml
+
+    - name: 3. Deploy Backend Service & Deployment
+      include_tasks: k8s-manifests/deploy_backend.yml
+
+    - name: 4. Deploy Frontend Service & Deployment
+      include_tasks: k8s-manifests/deploy_frontend.yml

@@ -1,14 +1,7 @@
 ---
 - name: Deploy Frontend on Kubernetes
-  hosts: wsl
+  hosts: all
   tasks:
-    - name: Create a web-app namespace
-      kubernetes.core.k8s:
-        name: web-app
-        api_version: v1
-        kind: Namespace
-        state: present
-
     - name: Deploy Frontend Deployment
       kubernetes.core.k8s:
         state: present
@@ -30,10 +23,13 @@
               spec:
                 containers:
                 - name: frontend
-                  image: "{{ lookup('env', 'DOCKER_USERNAME') }}/server-frontend:{{ version }}"
+                  image: "{{ docker_user }}/server-frontend:{{ version }}"
                   ports:
-                  - containerPort: 3000
-
+                  - containerPort: 80
+                  env:
+                    - name: BACKEND_URL
+                      value: "http://backend-service:8080"
+---
     - name: Create Frontend Service
       kubernetes.core.k8s:
         state: present
@@ -48,6 +44,6 @@
             selector:
               app: frontend
             ports:
-            - port: 3000
-              targetPort: 3000
+            - port: 80
+              targetPort: 80
               nodePort: 30300

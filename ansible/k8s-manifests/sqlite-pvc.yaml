@@ -1,0 +1,26 @@
+---
+- name: Setup Persistence for SQLite
+  hosts: all
+  tasks:
+    - name: Create web-app namespace
+      kubernetes.core.k8s:
+        name: web-app
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Create PersistentVolumeClaim
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: sqlite-pvc
+            namespace: web-app
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1Gi
