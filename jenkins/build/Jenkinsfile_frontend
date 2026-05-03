@@ -52,7 +52,7 @@ pipeline {
                         . /home/rattasat/Desktop/serverless/project-server-less/.env
                         set +a
                         echo "Logging in to Docker Hub..."
-                        echo \${PASSWORD} | docker login -u \${USERNAME} --password-stdin
+                        echo \${DOCKER_PASSWORD} | docker login -u \${DOCKER_USERNAME} --password-stdin
                         echo "Pushing frontend Image to Docker Hub..."
                         docker push \${DOCKER_USERNAME}/server-frontend:${version}
                     """
