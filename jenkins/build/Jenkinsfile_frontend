@@ -46,8 +46,6 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                         sh """
-                            mkdir -p .docker
-                            export DOCKER_CONFIG="\$PWD/.docker"
                             echo "Logging in to Docker Hub..."
                             echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
                             echo "Pushing frontend Image version: ${params.version} ..."
