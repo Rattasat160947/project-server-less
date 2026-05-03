@@ -10,7 +10,7 @@ pipeline {
                         set -a
                         source /home/rattasat/Desktop/serverless/project-server-less/.env
                         set +a
-                        git clone https://\$\{USERNAME\}:\$\{PASSWORD\}@github.com/\$\{USERNAME\}/project-server-less.git .
+                        git clone https://\${USERNAME}:\${PASSWORD}@github.com/\${USERNAME}/project-server-less.git .
                     """
                 }
             }
