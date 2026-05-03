@@ -35,6 +35,7 @@
                 - name: backend
                   # ใช้ตัวแปรที่ส่งมาจาก Jenkinsfile
                   image: "{{ docker_user }}/server-backend:{{ version }}"
+                  imagePullPolicy: Always
                   ports:
                   - containerPort: 8080
                   env:

@@ -2,7 +2,7 @@ pipeline {
     agent { label "wsl" }
     
     parameters {
-        string(name: 'version', defaultValue: 'latest', description: 'Docker Image Tag to deploy')
+        string(name: 'version', defaultValue: '1.0.0', description: 'Docker Image Tag to deploy')
     }
 
     stages {
