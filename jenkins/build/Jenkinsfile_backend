@@ -34,7 +34,7 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                         sh """
                             echo "Testing backend Image..."
-                            docker run --rm \$DOCKER_USER/server-backend:${version} echo 'backend Test Passed!'
+                            docker run --rm \$DOCKER_USER/server-backend:${params.version} echo 'backend Test Passed!'
                         """
                     }
                 }
@@ -50,8 +50,8 @@ pipeline {
                             export DOCKER_CONFIG="\$PWD/.docker"
                             echo "Logging in to Docker Hub..."
                             echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
-                            echo "Pushing backend Image version: ${version} ..."
-                            docker push \$DOCKER_USER/server-backend:${version}
+                            echo "Pushing backend Image version: ${params.version} ..."
+                            docker push \$DOCKER_USER/server-backend:${params.version}
                         """
                     }
                 }
@@ -65,7 +65,7 @@ pipeline {
                         sh """
                             export DOCKER_CONFIG="\$PWD/.docker"
                             echo 'Cleaning up local Docker images...'
-                            docker rmi \$DOCKER_USER/server-backend:${version}
+                            docker rmi \$DOCKER_USER/server-backend:${params.version}
                             docker logout
                         """
                     }
