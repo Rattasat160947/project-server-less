@@ -13,8 +13,8 @@ RUN npm install express axios prom-client
 # คัดลอกโค้ดทั้งหมดเข้าเครื่อง
 COPY . .
 
-# เปิด port 3000 สำหรับหน้าเว็บและ /metrics
-EXPOSE 3000
+# เปิด port 80 สำหรับหน้าเว็บและ /metrics
+EXPOSE 80
 
 # รันแอปพลิเคชัน
 CMD ["node", "app.js"]
