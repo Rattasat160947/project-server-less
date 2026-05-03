@@ -30,7 +30,7 @@ app.post('/api/checkin', async (req, res) => {
 });
 
 // Serve the single page
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
     res.send(`
 <!DOCTYPE html>
 <html lang="th">
