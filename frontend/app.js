@@ -30,7 +30,10 @@ app.post('/api/checkin', async (req, res) => {
 });
 
 // Serve the single page
-app.get('/:any(.*)', (req, res) => {
+app.use((req, res, next) => {
+    if (req.path === '/metrics' || req.path.startsWith('/api')) {
+        return next();
+    }
     res.send(`
 <!DOCTYPE html>
 <html lang="th">
