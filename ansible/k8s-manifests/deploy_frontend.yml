@@ -29,7 +29,7 @@
                   env:
                     - name: BACKEND_URL
                       value: "http://backend-service:8080"
----
+
     - name: Create Frontend Service
       kubernetes.core.k8s:
         state: present
