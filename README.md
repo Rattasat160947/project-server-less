@@ -17,7 +17,7 @@
 ## 📌 ภาพรวมโปรเจค
 
 ### แอปพลิเคชัน
-- **Frontend:** Vanilla HTML, CSS, JS
+- **Frontend:** Node.js (Express) สำหรับทำ Web Server เสิร์ฟ Vanilla HTML, CSS, JS และทำหน้าที่เป็น API Proxy (Axios) ชี้ไปยัง Backend
 - **Backend:** Golang (REST API) + SQLite (Persistent Storage)
 - **คำอธิบาย:** Web Application ที่แบ่งสถาปัตยกรรมเป็น 2 ส่วน คือ Frontend และ Backend ผ่าน Docker Container และจัดการ Orchestration ด้วย Kubernetes เพื่อให้สามารถทนทานต่อความล้มเหลวและขยายระบบได้ง่าย
 
@@ -71,10 +71,9 @@ project-server-less/
 │   ├── go.mod
 │   ├── go.sum
 │   └── main.go               # โค้ดหลักของ Backend
-├── frontend/                 # โฟลเดอร์สำหรับ Frontend (HTML, JS)
+├── frontend/                 # โฟลเดอร์สำหรับ Frontend (Node.js + HTML/JS)
 │   ├── Dockerfile            # คำสั่งสร้าง Frontend image
-│   ├── app.js
-│   └── index.html            # หน้าเว็บหลัก
+│   └── app.js                # โค้ดหลัก Web Server (Express) ที่รวม HTML และ API Proxy ด้วย Axios แจจบในไฟล์เดียว
 ├── jenkins/                  # CI/CD Pipelines
 │   ├── build/                # ไฟล์ Pipeline สำหรับ Build Image
 │   │   ├── Jenkinsfile_backend
@@ -129,7 +128,7 @@ kubectl apply -f k8s/frontend.yaml
 # คอยเช็คสถานะ
 kubectl get pods,svc
 ```
-> สามารถเข้าหน้าเว็บผ่าน IP เครื่อง Node Port `30300` สำหรับ Frontend และ `30500` สำหรับ Backend
+> สามารถเข้าหน้าเว็บผ่าน IP เครื่อง Node Port `30080` สำหรับ Frontend
 
 ---
 
@@ -144,7 +143,7 @@ kubectl get pods,svc
    - อัปโหลด Docker Image (`USERNAME/server-frontend` และ `USERNAME/server-backend`) ไปที่ Docker Hub และเคลียร์พื้นที่
 
 2. **วงจร Deploy** (`jenkins/deploy/Jenkinsfile_*`)
-   - ดึงค่า Environment `.env` (Credentials ต่างๆ)
+   - ดึง Security Credentials ผ่าน Jenkins `withCredentials` (`github-creds`, `docker-hub-creds`) จากระบบ Jenkins เพื่อความปลอดภัยขั้นสูงสุดโดยไม่ให้รหัสโผล่ใน Log
    - รันคำสั่ง Ansible เพื่อย้ายไป Deploy ไฟล์ Manifest (.yaml) ภายใน Kubernetes ของระบบปลายทาง
 
 ---
@@ -187,9 +186,11 @@ kubectl describe pod [pod-name]
 # ดูที่ Events: อาจเกิดจาก Node ทรัพยากรไม่พอ หรือ PVC ผิดพลาด
 ```
 
-**Jenkins สั่ง Deploy ผ่าน Ansible ไม่สำเร็จ**
-- ให้ตรวจสอบว่าคุณมีไฟล์ `.env` ที่ root path `/home/rattasat/Desktop/serverless/project-server-less/.env` แล้วหรือยัง เพราะ Jenkinsfile มองหา Environment ตัวนี้อยู่ 
-- หากไม่พบ อาจทำให้ไม่สามารถ Deploy Image ได้ถูกเวอร์ชั่น
+**Jenkins สั่ง Build/Deploy ไม่สำเร็จ (Authentication Failed)**
+- ให้ตรวจสอบว่าคุณได้สร้าง Credentials ใน Jenkins อย่างถูกต้องหรือไม่ โดยระบบต้องการ 2 Credentials: 
+  1. `github-creds` (สำหรับ Git Clone โค้ด) 
+  2. `docker-hub-creds` (สำหรับ Login และ Push รูปภาพขึ้น Docker Hub)
+- ไม่จำเป็นต้องใช้ไฟล์ `.env` สำหรับ Pipeline อีกต่อไปแล้ว ระบบถูกปรับให้ใช้ตัวแปรจาก Jenkins อย่างปลอดภัย
 
 **Prometheus แสดง target เป็น DOWN หรือ Unhealthy**
 ```bash
