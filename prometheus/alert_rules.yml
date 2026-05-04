@@ -11,12 +11,22 @@ groups:
           summary: "Instance {{ $labels.instance }} down"
           description: "Service {{ $labels.job }} ล่มมานานกว่า 1 นาทีแล้ว"
 
-      # 2. แจ้งเตือนเมื่อมีการ Check-in (ตัวอย่างการใช้ Rate)
+      # 2. แจ้งเตือนเมื่อมีการ Check-in ถี่ผิดปกติ (ป้องกันการปั๊มข้อมูล/ยิง API)
       - alert: HighCheckinRate
-        expr: rate(frontend_checkins_total[1m]) > 5
+        expr: rate(student_checkin_total[1m]) > 10
         for: 1m
         labels:
           severity: warning
         annotations:
-          summary: "High Check-in rate"
-          description: "มีการกด Check-in มากกว่า 5 ครั้งต่อนาที"
+          summary: "High Check-in rate detected"
+          description: "มีการกด Check-in มากกว่า 10 ครั้งต่อนาที ใน Job {{ $labels.job }}"
+
+      # 3. แจ้งเตือนเมื่อพื้นที่ Disk ใกล้เต็ม (สำคัญมากสำหรับ SQLite)
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk Space Low"
+          description: "พื้นที่ Disk เหลือต่ำกว่า 10% (เสี่ยงต่อการเขียนไฟล์ SQLite ไม่ได้)"

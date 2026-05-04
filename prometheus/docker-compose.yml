@@ -7,6 +7,7 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - ./alert_rules.yml:/etc/prometheus/alert_rules.yml
+      - prometheus_data:/prometheus
     restart: unless-stopped
     networks:
       - monitoring
@@ -16,6 +17,8 @@ services:
     container_name: grafana
     ports:
       - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
     restart: unless-stopped
     networks:
       - monitoring
@@ -26,6 +29,13 @@ services:
     restart: unless-stopped
     ports:
       - "9100:9100"
+    networks:
+      - monitoring
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
 networks:
-  monitoring :
+  monitoring:
     driver: bridge
