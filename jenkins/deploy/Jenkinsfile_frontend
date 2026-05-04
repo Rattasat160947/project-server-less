@@ -33,6 +33,8 @@ pipeline {
                             --extra-vars "version=${params.version} docker_user=${DOCKER_USERNAME}"
                         """
                     }
+                    sh "kubectl rollout restart deployment/frontend -n web-app"
+                    sh "kubectl rollout status deployment/frontend -n web-app --timeout=120s"
                 }
             }
         }
