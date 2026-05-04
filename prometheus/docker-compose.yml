@@ -26,6 +26,6 @@ services:
     restart: unless-stopped
     ports:
       - "9100:9100"
-    networks:
-      monitoring :
-        driver: bridge
+networks:
+  monitoring :
+    driver: bridge
