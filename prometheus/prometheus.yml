@@ -10,6 +10,9 @@ scrape_configs:
     static_configs:
       # แก้จาก kost เป็น host เพื่อให้ชี้กลับมาที่เครื่องเราได้ถูกต้อง
       - targets: ["host.docker.internal:30300"]
-
+  - job_name: 'node_metrics'
+    static_configs:
+      - targets: ["node-exporter:9100"]
+    
 rule_files:
   - "alert_rules.yml"

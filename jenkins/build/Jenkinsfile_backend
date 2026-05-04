@@ -56,6 +56,15 @@ pipeline {
                 }
             }
         }
+        stage('Trigger Deploy') {
+            steps {
+        build job: 'Deploy-Backend', 
+              wait: false, 
+              parameters: [
+                  string(name: 'version', value: "${params.version}")
+              ]
+            }
+        }
 
         stage('Cleanup') {
             steps {

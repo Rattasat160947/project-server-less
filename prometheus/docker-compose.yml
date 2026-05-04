@@ -15,3 +15,10 @@ services:
     ports:
       - "3000:3000"
     restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
