@@ -6,26 +6,25 @@ const app = express();
 const port = process.env.PORT || 80;
 const BACKEND_URL = process.env.BACKEND_URL || 'http://backend-service:8080';
 
-const register = new client.Registry(); 
+const register = client.register; 
 client.collectDefaultMetrics({ register });
 
-// สร้าง Custom Metric สำหรับนับจำนวนการ Check-in (เลียนแบบโค้ดอาจารย์)
 const checkinCounter = new client.Counter({
   name: 'frontend_checkins_total',
   help: 'Total number of check-ins submitted via frontend',
+  labelNames: ['status'], 
   registers: [register],
 });
 
 // Setup Prometheus metrics
-const collectDefaultMetrics = client.collectDefaultMetrics;
 collectDefaultMetrics({ register: client.register });
 
 app.use(express.json());
 
 // Metrics endpoint
 app.get('/metrics', async (req, res) => {
-    res.set('Content-Type', client.register.contentType);
-    res.end(await client.register.metrics());
+    res.set('Content-Type', register.contentType);
+    res.send(await register.metrics());
 });
 
 // Proxy route using Axios to connect Frontend Server -> Backend Go Server
@@ -39,6 +38,10 @@ app.post('/api/checkin', async (req, res) => {
         res.status(error.response ? error.response.status : 500).send('Error connecting to backend');
     }
 });
+
+app.listen(port, () => {
+    console.log(`Frontend server is running on port ${port}`);
+})
 
 // Serve the single page
 app.use((req, res, next) => {
