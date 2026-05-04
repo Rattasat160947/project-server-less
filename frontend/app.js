@@ -12,12 +12,8 @@ client.collectDefaultMetrics({ register });
 const checkinCounter = new client.Counter({
   name: 'frontend_checkins_total',
   help: 'Total number of check-ins submitted via frontend',
-  labelNames: ['status'], 
   registers: [register],
 });
-
-// Setup Prometheus metrics
-collectDefaultMetrics({ register: client.register });
 
 app.use(express.json());
 
