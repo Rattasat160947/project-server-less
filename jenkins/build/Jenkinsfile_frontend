@@ -64,7 +64,7 @@ pipeline {
                         sh """
                             export DOCKER_CONFIG="\$PWD/.docker"
                             echo 'Cleaning up local Docker images...'
-                            docker rmi \$DOCKER_USER/server-frontend:${params.version}
+                            docker rmi -f \$DOCKER_USER/server-frontend:${params.version} || true
                             docker logout
                         """
                     }
