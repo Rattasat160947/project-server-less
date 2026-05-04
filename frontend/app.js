@@ -6,6 +6,16 @@ const app = express();
 const port = process.env.PORT || 80;
 const BACKEND_URL = process.env.BACKEND_URL || 'http://backend-service:8080';
 
+const register = new client.Registry(); 
+client.collectDefaultMetrics({ register });
+
+// สร้าง Custom Metric สำหรับนับจำนวนการ Check-in (เลียนแบบโค้ดอาจารย์)
+const checkinCounter = new client.Counter({
+  name: 'frontend_checkins_total',
+  help: 'Total number of check-ins submitted via frontend',
+  registers: [register],
+});
+
 // Setup Prometheus metrics
 const collectDefaultMetrics = client.collectDefaultMetrics;
 collectDefaultMetrics({ register: client.register });
@@ -22,6 +32,7 @@ app.get('/metrics', async (req, res) => {
 app.post('/api/checkin', async (req, res) => {
     try {
         const response = await axios.post(`${BACKEND_URL}/api/checkin`, req.body);
+        checkinCounter.inc();
         res.status(response.status).send(response.data);
     } catch (error) {
         console.error('Error forwarding to backend:', error.message);
