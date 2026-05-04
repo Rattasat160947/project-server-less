@@ -75,7 +75,7 @@ app.use((req, res, next) => {
                         <div class="inline-flex items-center justify-center w-14 h-14 rounded-3xl bg-[#8B735B] text-white mb-6">
                             <i data-lucide="heart" class="fill-current"></i>
                         </div>
-                        <h1 class="text-2xl font-semibold">เช็คชื่อเข้าเรียน นะจ๊ะ</h1>
+                        <h1 class="text-2xl font-semibold">เช็คชื่อเข้าเรียน ..</h1>
                     </div>
                     <form id="checkin-form" class="space-y-6">
                         <div>
