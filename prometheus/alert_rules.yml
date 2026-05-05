@@ -1,7 +1,7 @@
 groups:
-  - name: app_alerts
+  - name: web_app_alerts
     rules:
-      # 1. แจ้งเตือนเมื่อ Service ล่ม (Down)
+      # 1. แจ้งเตือนเมื่อ Service ล่ม (คะแนนด้าน Reliability)
       - alert: InstanceDown
         expr: up == 0
         for: 1m
@@ -11,12 +11,24 @@ groups:
           summary: "Instance {{ $labels.instance }} down"
           description: "Service {{ $labels.job }} ล่มมานานกว่า 1 นาทีแล้ว"
 
-      # 2. แจ้งเตือนเมื่อมีการ Check-in ถี่ผิดปกติ (ป้องกันการปั๊มข้อมูล/ยิง API)
+      # 2. แจ้งเตือนการ Check-in ถี่ผิดปกติ (คะแนนด้าน Application Monitoring)
+      # อ้างอิงจากเมทริกซ์การเช็คอินที่ใช้ในระบบของคุณ
       - alert: HighCheckinRate
-        expr: rate(frontend_checkins_total[1m]) > 10
+        expr: increase(frontend_checkins_total[1m]) > 10
         for: 1m
         labels:
           severity: warning
         annotations:
           summary: "High Check-in rate detected"
           description: "มีการกด Check-in มากกว่า 10 ครั้งต่อนาที ใน Job {{ $labels.job }}"
+
+      # 3. แจ้งเตือนเมื่อ Container ใช้ RAM สูงเกินกำหนด (คะแนนด้าน Infrastructure)
+      # เลือกใช้ RAM ของ Container เพื่อให้ตรงกับโปรเจกต์ Kubernetes
+      - alert: BackendHighMemory
+        expr: container_memory_usage_bytes{pod=~"backend-.*"} > 500000000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backend Container High Memory Usage"
+          description: "Pod Backend ใช้ RAM เกิน 500MB มานานกว่า 2 นาทีแล้ว"
