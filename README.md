@@ -185,8 +185,6 @@ kubectl describe pod [pod-name] -n web-app
 ```
 (ส่วนใหญ่กิดจาก PVC ยังไม่พร้อม หรือตั้งค่า Docker Image ทะลุไม่ได้ใน Ansible/Jenkins)
 
-**Ansible เข้าไม่ถึงโฮสต์เป้าหมาย**
-ตรวจไฟล์ `ansible/inventory/hosts.ini` ว่าได้ใส่ IP และ SSH Key ของ Node ปลายทางถูกต้อง
 
 ---
 
