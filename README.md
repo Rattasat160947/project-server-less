@@ -121,6 +121,12 @@ project-server-less/
 
 ## 🏃 วิธีการรันโปรเจค
 
+### Clone Repository
+```bash
+git clone https://github.com/Rattasat160947/project-server-less.git
+cd project-server-less
+```
+
 ### 1. Build และรันด้วย Docker (แบบ Local Manual)
 ```bash
 # Backend (รันที่พอร์ต 8080)
@@ -182,7 +188,68 @@ ansible-playbook -i inventory/hosts.ini deploy.yml -e "version=latest" -e "docke
 > **เทคนิคด้านความปลอดภัย**: ใช้งาน `withCredentials('github-creds', 'docker-hub-creds')` ซ่อนค่าลับทั้งหมดจาก Logs 
 
 ---
+### ลำดับการทำงานของ Pipeline
 
+```
+Checkout ──▶ Build ──▶ Test ──▶ Docker Build ──▶ Push to Hub ──▶ Deploy
+```
+
+| Stage | คำอธิบาย |
+|-------|----------|
+| **Checkout** | ดึงโค้ดล่าสุดจาก GitHub |
+| **Build** | ติดตั้ง dependencies |
+| **Test** | รัน unit test |
+| **Docker Build** | สร้าง Docker image |
+| **Push to Hub** | อัปโหลด image ขึ้น Docker Hub |
+| **Deploy** | รัน  Ansible แล้ว apply Kubernetes manifests |
+
+### วิธีตั้งค่า Jenkins
+1. ติดตั้ง Jenkins และเปิดที่ `http://localhost:8080`
+2. ติดตั้ง plugin: **Git**, **Pipeline**, **Docker Pipeline**
+3. เพิ่ม credentials สำหรับ Docker Hub (ชื่อ `docker-hub-creds`)
+4. สร้าง Pipeline job ใหม่ และชี้ไปที่ repository นี้
+5. ตั้งค่า Webhook ใน GitHub:
+   - ไปที่ **Settings → Webhooks → Add webhook**
+   - Payload URL: `http://[jenkins-host]:8080/github-webhook/`
+   - Content type: `application/json`
+   - ติ๊ก trigger: **Just the push event**
+
+---
+## ☸️ Kubernetes Deployment
+
+### Apply Manifests ด้วยตัวเอง
+```bash
+kubectl apply -f /ansible/deploy.yml
+```
+
+### ตรวจสอบสถานะ
+```bash
+kubectl get pods -n web-app
+kubectl get svc -n web-app
+```
+
+### ผลลัพธ์ที่ควรจะได้
+```
+NAME                        READY   STATUS    RESTARTS   AGE
+backend-xxxxxxxxx-xxxxx  1/1     Running   0          2m
+frontend-xxxxxxxxx-yyyyy  1/1     Running   0          2m
+
+NAME            TYPE       CLUSTER-IP     PORT(S)          AGE
+[app-name]-svc  NodePort   10.96.xx.xxx   5000:30080/TCP   2m
+```
+```
+NAME                      TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+backend-metrics-service   NodePort    [ IP ]     <none>        9100:30301/TCP   46h
+backend-service           ClusterIP   [ IP ]   <none>        8080/TCP         4d20h
+frontend-service          NodePort    [ IP ]    <none>        80:30300/TCP     4d20h
+```
+
+### เข้าถึงแอปพลิเคชัน
+```
+http://localhost:30300
+```
+
+---
 ## 📊 Monitoring (Prometheus & Grafana)
 
 ### Prometheus — เก็บ Metrics
@@ -215,6 +282,16 @@ docker-compose up -d
 | HighCheckinRate | Check-in มากกว่า 10 ครั้ง/นาที | warning | ตรวจสอบ spike ของการเช็คชื่อ |
 | BackendHighMemory | Backend ใช้ RAM > 500MB นาน 2 นาที | warning | ตรวจสอบ container resource |
 
+
+---
+### 🧪 API Endpoints
+
+Method | Endpoint | คำอธิบาย
+--- | --- | ---
+GET | / | Health check — ตรวจสอบสถานะว่าแอปพลิเคชันยังรันอยู่ตามปกติ
+GET | /metrics | Prometheus Metrics — ส่งข้อมูลเมทริกซ์ (เช่น frontend_checkins_total) ให้ Prometheus Server ดึงไปประมวลผล
+GET | /api/checkins | Get All Check-ins — ดึงข้อมูลรายชื่อนักศึกษาและรหัสนักศึกษาทั้งหมดที่บันทึกอยู่ในฐานข้อมูล SQLite
+POST | /api/checkin | Submit Check-in — รับข้อมูลชื่อ-รหัสนักศึกษาจากหน้า Frontend เพื่อบันทึกลงในไฟล์ app.db
 ---
 
 ## 🐛 ปัญหาที่พบบ่อย (Troubleshooting)
